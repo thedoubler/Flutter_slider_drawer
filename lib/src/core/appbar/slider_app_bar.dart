@@ -45,13 +45,8 @@ class _InternalSliderAppBar extends BaseSliderAppBar
   @override
   Widget build(BuildContext context) {
     List<Widget> items = [
-      _LeadingIcon(
-        onTap: onDrawerTap,
-        animationController: animationController,
-        config: config,
-      ),
       Expanded(child: config.title),
-      config.trailing ?? SizedBox(width: 35)
+      config.trailing ?? SizedBox.shrink()
     ];
 
     if (slideDirection == SlideDirection.rightToLeft) {
@@ -69,15 +64,16 @@ class _InternalSliderAppBar extends BaseSliderAppBar
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
 
-class _LeadingIcon extends StatelessWidget {
+class LeadingIcon extends StatelessWidget {
   final SliderAppBarConfig config;
   final AnimationController animationController;
   final VoidCallback? onTap;
 
-  const _LeadingIcon(
-      {required this.config,
-      required this.animationController,
-      required this.onTap});
+  const LeadingIcon({
+    required this.config,
+    required this.animationController,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {

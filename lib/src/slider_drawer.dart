@@ -1,11 +1,12 @@
+import 'package:flutter/material.dart' show Colors;
 import 'package:flutter/widgets.dart';
+import 'package:flutter_slider_drawer/flutter_slider_drawer.dart';
 import 'package:flutter_slider_drawer/src/core/animation/animation_strategy.dart';
 import 'package:flutter_slider_drawer/src/core/animation/slider_drawer_controller.dart';
 import 'package:flutter_slider_drawer/src/core/appbar/slider_app_bar.dart';
-import 'package:flutter_slider_drawer/src/core/slider_shadow.dart';
+
 import 'package:flutter_slider_drawer/src/slider_shadow.dart';
 import 'package:flutter_slider_drawer/src/slider_bar.dart';
-import 'package:flutter_slider_drawer/src/slider_direction.dart';
 
 /// SliderDrawer which have two [child] and [slider] parameter
 ///
@@ -34,7 +35,7 @@ import 'package:flutter_slider_drawer/src/slider_direction.dart';
 class SliderDrawer extends StatefulWidget {
   /// [Widget] which display when user open drawer
   ///
-  final Widget slider;
+  final Widget? slider;
 
   /// [Widget] main screen widget
   ///
@@ -70,24 +71,35 @@ class SliderDrawer extends StatefulWidget {
   ///[SlideDirection.leftToRight]
   ///[SlideDirection.topToBottom]
   ///
-  /// By default it's [SlideDirection.leftToRight]
+  /// By default it's [SlideDirection.rightToLeft], others not supported for now.
   ///
-  final SlideDirection slideDirection;
+  final SlideDirection slideDirection = SlideDirection.rightToLeft;
 
-// The color of the [Material] widget that underlies the entire Scaffold.
+  /// The color of the [Material] widget that underlies the entire Scaffold.
   ///
   /// The theme's [ThemeData.scaffoldBackgroundColor] by default.
   final Color? backgroundColor;
 
+  ///[sliderItems] if you want to add any widget in slider menu then use this parameter
+  /// it's optional
+  final List<Widget>? sliderItems;
+
+  ///[sliderTrailingItem] if you want to add any widget in slider menu then use this parameter
+  /// it's optional
+  ///
+
+  final Widget? sliderTrailingItem;
+
   const SliderDrawer(
       {Key? key,
-      required this.slider,
+      this.slider,
       required this.child,
+      this.sliderItems,
+      this.sliderTrailingItem,
       this.isDraggable = true,
       this.animationDuration = 400,
       this.sliderOpenSize = 265,
       this.sliderCloseSize = 0,
-      this.slideDirection = SlideDirection.leftToRight,
       this.sliderBoxShadow,
       this.appBar,
       this.backgroundColor})
@@ -101,6 +113,8 @@ class SliderDrawerState extends State<SliderDrawer>
     with TickerProviderStateMixin {
   late final SliderDrawerController _controller;
   late final Animation<double> _animation;
+  Function(AnimationStatus status)? onAnimation;
+
   late final AnimationStrategy _animationStrategy;
 
   /// check whether drawer is open
@@ -118,6 +132,22 @@ class SliderDrawerState extends State<SliderDrawer>
 
   /// Close slider
   void closeSlider() => _controller.closeSlider();
+
+  Color startColor = Colors.transparent;
+  Color endColor = Colors.black.withAlpha(38);
+
+  late Animation<double> _alphaAnimation;
+
+  late Animation<double> _positionAnimation;
+  late Animation<double> _itemEntryAlphaAnimation;
+
+  bool drawerEnabled = true;
+
+  void setDrawerEnabled(bool value) {
+    setState(() {
+      drawerEnabled = value;
+    });
+  }
 
   @override
   void initState() {
@@ -138,6 +168,25 @@ class SliderDrawerState extends State<SliderDrawer>
     ));
 
     _animationStrategy = SliderAnimationStrategy();
+
+    _alphaAnimation = Tween<double>(begin: 0, end: 0.15)
+        .animate(_controller.animationController);
+
+    _positionAnimation = Tween<double>(
+      begin: 0,
+      end: 44.0,
+    ).animate(
+      CurvedAnimation(
+        parent: animationController,
+        curve: Curves.easeOut,
+      ),
+    );
+    _itemEntryAlphaAnimation =
+        Tween<double>(begin: 0, end: 1).animate(animationController);
+
+    _controller.addListener(() {
+      onAnimation?.call(_controller.animationController.status);
+    });
   }
 
   @override
@@ -146,11 +195,70 @@ class SliderDrawerState extends State<SliderDrawer>
       builder: (context, constraints) {
         return Stack(
           children: [
-            SliderBar(
-              slideDirection: widget.slideDirection,
-              sliderMenu: widget.slider,
-              sliderMenuOpenSize: widget.sliderOpenSize,
-            ),
+            if (widget.slider != null) ...{
+              AnimatedBuilder(
+                animation: _controller.animationController,
+                builder: (context, child) {
+                  final offset = _animationStrategy.getOffset(
+                    widget.slideDirection,
+                    _animation.value,
+                  );
+
+                  return Transform.translate(
+                    offset: Offset(constraints.maxWidth + offset.dx, offset.dy),
+                    child: child,
+                  );
+                },
+                child: SliderBar(
+                  slideDirection: widget.slideDirection,
+                  sliderMenu: widget.slider!,
+                  sliderMenuOpenSize: widget.sliderOpenSize,
+                ),
+              ),
+            } else if (widget.sliderItems != null) ...{
+              AnimatedBuilder(
+                animation: _controller.animationController,
+                builder: (context, child) {
+                  final offset = _animationStrategy.getOffset(
+                    widget.slideDirection,
+                    _animation.value,
+                  );
+
+                  return Transform.translate(
+                    offset: Offset(constraints.maxWidth + offset.dx, offset.dy),
+                    child: SliderBar(
+                      slideDirection: widget.slideDirection,
+                      sliderMenuOpenSize: widget.sliderOpenSize,
+                      sliderMenu: Stack(
+                        children: [
+                          for (var index = 0;
+                              index < widget.sliderItems!.length;
+                              index++) ...{
+                            Positioned(
+                              top: 0 + _positionAnimation.value * index,
+                              left: 0,
+                              right: 0,
+                              child: Opacity(
+                                opacity: _itemEntryAlphaAnimation.value,
+                                child: widget.sliderItems![index],
+                              ),
+                            ),
+                          },
+                          if (widget.sliderTrailingItem != null) ...{
+                            Positioned(
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              child: widget.sliderTrailingItem!,
+                            ),
+                          }
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            },
 
             /// Shadow Shadow
             if (widget.sliderBoxShadow != null)
@@ -164,13 +272,15 @@ class SliderDrawerState extends State<SliderDrawer>
 
             AnimatedBuilder(
               animation: _controller.animationController,
-              builder: (context, child) => Transform.translate(
-                offset: _animationStrategy.getOffset(
-                  widget.slideDirection,
-                  _animation.value,
-                ),
-                child: child,
-              ),
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: _animationStrategy.getOffset(
+                    widget.slideDirection,
+                    _animation.value,
+                  ),
+                  child: child,
+                );
+              },
               child: GestureDetector(
                 onHorizontalDragStart: widget.isDraggable
                     ? (details) => _handleDragStart(details)
@@ -184,7 +294,6 @@ class SliderDrawerState extends State<SliderDrawer>
                 child: Container(
                   width: double.infinity,
                   height: double.infinity,
-                  color: widget.backgroundColor ?? Color(0xFFFFFFFF),
                   child: Column(
                     children: [
                       AppBar(
@@ -199,7 +308,36 @@ class SliderDrawerState extends State<SliderDrawer>
                   ),
                 ),
               ),
-            )
+            ),
+            AnimatedBuilder(
+              animation: _controller.animationController,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: _animationStrategy.getOffset(
+                    widget.slideDirection,
+                    _animation.value,
+                  ),
+                  child: Container(
+                    width: double.infinity,
+                    height: double.infinity,
+                    color: Colors.black.withValues(
+                      alpha: _alphaAnimation.value,
+                    ),
+                  ),
+                );
+              },
+            ),
+            if (drawerEnabled) ...{
+              Positioned(
+                right: 16,
+                top: 16,
+                child: LeadingIcon(
+                  onTap: _controller.toggle,
+                  animationController: _controller.animationController,
+                  config: SliderAppBarConfig(),
+                ),
+              ),
+            }
           ],
         );
       },

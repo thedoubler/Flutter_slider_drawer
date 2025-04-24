@@ -15,7 +15,11 @@ class SliderDrawerController extends ChangeNotifier {
     required this.slideDirection,
     this.threshold = 0.3,
   }) : animationController = AnimationController(
-            vsync: vsync, duration: Duration(milliseconds: animationDuration));
+          vsync: vsync,
+          duration: Duration(
+            milliseconds: animationDuration,
+          ),
+        );
 
   bool get isDragging => _isDragging;
 
