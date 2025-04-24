@@ -29,8 +29,7 @@ class SliderAppBar extends BaseSliderAppBar {
   }
 }
 
-class _InternalSliderAppBar extends BaseSliderAppBar
-    implements PreferredSizeWidget {
+class _InternalSliderAppBar extends BaseSliderAppBar {
   /// Animation controller for drawer sliding effect
   final AnimationController animationController;
   final SlideDirection slideDirection;
@@ -53,15 +52,11 @@ class _InternalSliderAppBar extends BaseSliderAppBar
       items = items.reversed.toList();
     }
     return Container(
-      height: kToolbarHeight,
       padding: config.padding,
       color: config.backgroundColor ?? Color(0xFFFFFFFF),
       child: Row(children: items),
     );
   }
-
-  @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
 
 class LeadingIcon extends StatelessWidget {

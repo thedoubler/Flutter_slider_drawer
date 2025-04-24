@@ -39,12 +39,15 @@ class _HomePageState extends State<HomePage> {
         isDraggable: false,
         appBar: SliderAppBar(
           config: SliderAppBarConfig(
-            title: Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
+            title: SizedBox(
+              height: kToolbarHeight,
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),
