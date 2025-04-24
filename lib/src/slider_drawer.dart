@@ -317,11 +317,14 @@ class SliderDrawerState extends State<SliderDrawer>
                     widget.slideDirection,
                     _animation.value,
                   ),
-                  child: Container(
-                    width: double.infinity,
-                    height: double.infinity,
-                    color: Colors.black.withValues(
-                      alpha: _alphaAnimation.value,
+                  child: IgnorePointer(
+                    ignoring: !_controller.isDrawerOpen,
+                    child: Container(
+                      width: double.infinity,
+                      height: double.infinity,
+                      color: Colors.black.withValues(
+                        alpha: _alphaAnimation.value,
+                      ),
                     ),
                   ),
                 );
