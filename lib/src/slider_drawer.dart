@@ -127,6 +127,8 @@ class SliderDrawerState extends State<SliderDrawer>
   AnimationController get animationController =>
       _controller.animationController;
 
+  SliderDrawerController get controller => _controller;
+
   /// Toggle drawer
   void toggle() => _controller.toggle();
 
