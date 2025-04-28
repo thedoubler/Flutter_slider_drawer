@@ -48,7 +48,10 @@ class SliderDrawer extends StatefulWidget {
 
   /// The width of the open drawer.
   ///
-  final double sliderOpenSize;
+  // final double sliderOpenSize;
+
+  ///[double] The percentage of the screen width that the drawer should occupy
+  final double sliderOpenPercent;
 
   ///[double]  The width of the closed drawer. Default is 0.
   final double sliderCloseSize;
@@ -98,9 +101,9 @@ class SliderDrawer extends StatefulWidget {
       this.sliderTrailingItem,
       this.isDraggable = true,
       this.animationDuration = 400,
-      this.sliderOpenSize = 265,
       this.sliderCloseSize = 0,
       this.sliderBoxShadow,
+      this.sliderOpenPercent = 75,
       this.appBar,
       this.backgroundColor})
       : super(key: key);
@@ -159,8 +162,8 @@ class SliderDrawerState extends State<SliderDrawer>
     );
 
     _animation = Tween<double>(
-      begin: widget.sliderCloseSize,
-      end: widget.sliderOpenSize,
+      begin: 0,
+      end: widget.sliderOpenPercent,
     ).animate(CurvedAnimation(
       parent: _controller.animationController,
       curve: Curves.decelerate,
@@ -212,7 +215,8 @@ class SliderDrawerState extends State<SliderDrawer>
                 child: SliderBar(
                   slideDirection: widget.slideDirection,
                   sliderMenu: widget.slider!,
-                  sliderMenuOpenSize: widget.sliderOpenSize,
+                  sliderMenuOpenSize:
+                      _animation.value * MediaQuery.sizeOf(context).width / 100,
                 ),
               ),
             } else if (widget.sliderItems != null) ...{
@@ -221,14 +225,16 @@ class SliderDrawerState extends State<SliderDrawer>
                 builder: (context, child) {
                   final offset = _animationStrategy.getOffset(
                     widget.slideDirection,
-                    _animation.value,
+                    _animation.value * MediaQuery.sizeOf(context).width / 100,
                   );
 
                   return Transform.translate(
                     offset: Offset(constraints.maxWidth + offset.dx, offset.dy),
                     child: SliderBar(
                       slideDirection: widget.slideDirection,
-                      sliderMenuOpenSize: widget.sliderOpenSize,
+                      sliderMenuOpenSize: MediaQuery.sizeOf(context).width *
+                          widget.sliderOpenPercent /
+                          100,
                       sliderMenu: Stack(
                         children: [
                           for (var index = 0;
@@ -265,7 +271,8 @@ class SliderDrawerState extends State<SliderDrawer>
               SliderShadow(
                 animationDrawerController: _controller.animationController,
                 slideDirection: widget.slideDirection,
-                sliderOpenSize: widget.sliderOpenSize,
+                sliderOpenSize:
+                    _animation.value * MediaQuery.sizeOf(context).width / 100,
                 animation: _animation,
                 sliderBoxShadow: widget.sliderBoxShadow!,
               ),
@@ -273,11 +280,12 @@ class SliderDrawerState extends State<SliderDrawer>
             AnimatedBuilder(
               animation: _controller.animationController,
               builder: (context, child) {
+                final offset = _animationStrategy.getOffset(
+                  widget.slideDirection,
+                  _animation.value * MediaQuery.sizeOf(context).width / 100,
+                );
                 return Transform.translate(
-                  offset: _animationStrategy.getOffset(
-                    widget.slideDirection,
-                    _animation.value,
-                  ),
+                  offset: offset,
                   child: child,
                 );
               },
@@ -312,11 +320,13 @@ class SliderDrawerState extends State<SliderDrawer>
             AnimatedBuilder(
               animation: _controller.animationController,
               builder: (context, child) {
+                final offset = _animationStrategy.getOffset(
+                  widget.slideDirection,
+                  _animation.value * MediaQuery.sizeOf(context).width / 100,
+                );
+
                 return Transform.translate(
-                  offset: _animationStrategy.getOffset(
-                    widget.slideDirection,
-                    _animation.value,
-                  ),
+                  offset: offset,
                   child: IgnorePointer(
                     ignoring: !_controller.isDrawerOpen,
                     child: Container(
