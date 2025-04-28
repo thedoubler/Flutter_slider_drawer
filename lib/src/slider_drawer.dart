@@ -337,7 +337,9 @@ class SliderDrawerState extends State<SliderDrawer>
                 child: LeadingIcon(
                   onTap: _controller.toggle,
                   animationController: _controller.animationController,
-                  config: SliderAppBarConfig(),
+                  config: widget.appBar is SliderAppBar
+                      ? (widget.appBar as SliderAppBar).config
+                      : const SliderAppBarConfig(),
                 ),
               ),
             }
