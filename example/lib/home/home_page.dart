@@ -36,6 +36,7 @@ class _HomePageState extends State<HomePage> {
     return SafeArea(
       child: SliderDrawer(
         key: _sliderDrawerKey,
+        backgroundColor: Colors.red,
         isDraggable: false,
         appBar: SliderAppBar(
           config: SliderAppBarConfig(
@@ -52,7 +53,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ),
-        sliderOpenSize: MediaQuery.sizeOf(context).width * 0.75,
+        // sliderOpenSize: MediaQuery.sizeOf(context).width * 0.75,
         sliderItems: _menuItems
             .map(
               (e) => MenuItem(
@@ -73,6 +74,7 @@ class _HomePageState extends State<HomePage> {
             print('Logout');
           },
         ),
+
         child: const AuthorList(),
       ),
     );

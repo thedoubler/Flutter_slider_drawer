@@ -198,30 +198,137 @@ class SliderDrawerState extends State<SliderDrawer>
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        return Stack(
-          children: [
-            if (widget.slider != null) ...{
+        return Container(
+          child: Stack(
+            children: [
+              if (widget.slider != null) ...{
+                AnimatedBuilder(
+                  animation: _controller.animationController,
+                  builder: (context, child) {
+                    final offset = _animationStrategy.getOffset(
+                      widget.slideDirection,
+                      _animation.value,
+                    );
+
+                    return Transform.translate(
+                      offset:
+                          Offset(constraints.maxWidth + offset.dx, offset.dy),
+                      child: child,
+                    );
+                  },
+                  child: Container(
+                    color: widget.backgroundColor,
+                    child: SliderBar(
+                      slideDirection: widget.slideDirection,
+                      sliderMenu: widget.slider!,
+                      sliderMenuOpenSize: _animation.value *
+                          MediaQuery.sizeOf(context).width /
+                          100,
+                    ),
+                  ),
+                ),
+              } else if (widget.sliderItems != null) ...{
+                AnimatedBuilder(
+                  animation: _controller.animationController,
+                  builder: (context, child) {
+                    final offset = _animationStrategy.getOffset(
+                      widget.slideDirection,
+                      _animation.value * MediaQuery.sizeOf(context).width / 100,
+                    );
+
+                    return Transform.translate(
+                      offset:
+                          Offset(constraints.maxWidth + offset.dx, offset.dy),
+                      child: Container(
+                        color: widget.backgroundColor,
+                        child: SliderBar(
+                          slideDirection: widget.slideDirection,
+                          sliderMenuOpenSize: MediaQuery.sizeOf(context).width *
+                              widget.sliderOpenPercent /
+                              100,
+                          sliderMenu: Stack(
+                            children: [
+                              for (var index = 0;
+                                  index < widget.sliderItems!.length;
+                                  index++) ...{
+                                Positioned(
+                                  top: 0 + _positionAnimation.value * index,
+                                  left: 0,
+                                  right: 0,
+                                  child: Opacity(
+                                    opacity: _itemEntryAlphaAnimation.value,
+                                    child: widget.sliderItems![index],
+                                  ),
+                                ),
+                              },
+                              if (widget.sliderTrailingItem != null) ...{
+                                Positioned(
+                                  bottom: 0,
+                                  left: 0,
+                                  right: 0,
+                                  child: widget.sliderTrailingItem!,
+                                ),
+                              }
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              },
+
+              /// Shadow Shadow
+              if (widget.sliderBoxShadow != null)
+                SliderShadow(
+                  animationDrawerController: _controller.animationController,
+                  slideDirection: widget.slideDirection,
+                  sliderOpenSize:
+                      _animation.value * MediaQuery.sizeOf(context).width / 100,
+                  animation: _animation,
+                  sliderBoxShadow: widget.sliderBoxShadow!,
+                ),
+
               AnimatedBuilder(
                 animation: _controller.animationController,
                 builder: (context, child) {
                   final offset = _animationStrategy.getOffset(
                     widget.slideDirection,
-                    _animation.value,
+                    _animation.value * MediaQuery.sizeOf(context).width / 100,
                   );
-
                   return Transform.translate(
-                    offset: Offset(constraints.maxWidth + offset.dx, offset.dy),
+                    offset: offset,
                     child: child,
                   );
                 },
-                child: SliderBar(
-                  slideDirection: widget.slideDirection,
-                  sliderMenu: widget.slider!,
-                  sliderMenuOpenSize:
-                      _animation.value * MediaQuery.sizeOf(context).width / 100,
+                child: GestureDetector(
+                  onHorizontalDragStart: widget.isDraggable
+                      ? (details) => _handleDragStart(details)
+                      : null,
+                  onHorizontalDragEnd: widget.isDraggable
+                      ? (details) => _handleDragEnd(details)
+                      : null,
+                  onHorizontalDragUpdate: widget.isDraggable
+                      ? (details) => _handleDragUpdate(details, constraints)
+                      : null,
+                  child: Container(
+                    width: double.infinity,
+                    height: double.infinity,
+                    child: Column(
+                      children: [
+                        AppBar(
+                          slideDirection: widget.slideDirection,
+                          animationDrawerController:
+                              _controller.animationController,
+                          appBar: widget.appBar,
+                          onDrawerTap: _controller.toggle,
+                        ),
+                        Expanded(child: widget.child),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            } else if (widget.sliderItems != null) ...{
               AnimatedBuilder(
                 animation: _controller.animationController,
                 builder: (context, child) {
@@ -231,131 +338,35 @@ class SliderDrawerState extends State<SliderDrawer>
                   );
 
                   return Transform.translate(
-                    offset: Offset(constraints.maxWidth + offset.dx, offset.dy),
-                    child: SliderBar(
-                      slideDirection: widget.slideDirection,
-                      sliderMenuOpenSize: MediaQuery.sizeOf(context).width *
-                          widget.sliderOpenPercent /
-                          100,
-                      sliderMenu: Stack(
-                        children: [
-                          for (var index = 0;
-                              index < widget.sliderItems!.length;
-                              index++) ...{
-                            Positioned(
-                              top: 0 + _positionAnimation.value * index,
-                              left: 0,
-                              right: 0,
-                              child: Opacity(
-                                opacity: _itemEntryAlphaAnimation.value,
-                                child: widget.sliderItems![index],
-                              ),
-                            ),
-                          },
-                          if (widget.sliderTrailingItem != null) ...{
-                            Positioned(
-                              bottom: 0,
-                              left: 0,
-                              right: 0,
-                              child: widget.sliderTrailingItem!,
-                            ),
-                          }
-                        ],
+                    offset: offset,
+                    child: IgnorePointer(
+                      ignoring: !_controller.isDrawerOpen,
+                      child: Container(
+                        width: double.infinity,
+                        height: double.infinity,
+                        color: Colors.black.withValues(
+                          alpha: _alphaAnimation.value,
+                        ),
                       ),
                     ),
                   );
                 },
               ),
-            },
-
-            /// Shadow Shadow
-            if (widget.sliderBoxShadow != null)
-              SliderShadow(
-                animationDrawerController: _controller.animationController,
-                slideDirection: widget.slideDirection,
-                sliderOpenSize:
-                    _animation.value * MediaQuery.sizeOf(context).width / 100,
-                animation: _animation,
-                sliderBoxShadow: widget.sliderBoxShadow!,
-              ),
-
-            AnimatedBuilder(
-              animation: _controller.animationController,
-              builder: (context, child) {
-                final offset = _animationStrategy.getOffset(
-                  widget.slideDirection,
-                  _animation.value * MediaQuery.sizeOf(context).width / 100,
-                );
-                return Transform.translate(
-                  offset: offset,
-                  child: child,
-                );
-              },
-              child: GestureDetector(
-                onHorizontalDragStart: widget.isDraggable
-                    ? (details) => _handleDragStart(details)
-                    : null,
-                onHorizontalDragEnd: widget.isDraggable
-                    ? (details) => _handleDragEnd(details)
-                    : null,
-                onHorizontalDragUpdate: widget.isDraggable
-                    ? (details) => _handleDragUpdate(details, constraints)
-                    : null,
-                child: Container(
-                  width: double.infinity,
-                  height: double.infinity,
-                  child: Column(
-                    children: [
-                      AppBar(
-                        slideDirection: widget.slideDirection,
-                        animationDrawerController:
-                            _controller.animationController,
-                        appBar: widget.appBar,
-                        onDrawerTap: _controller.toggle,
-                      ),
-                      Expanded(child: widget.child),
-                    ],
+              if (drawerEnabled) ...{
+                Positioned(
+                  right: 16,
+                  top: 16,
+                  child: LeadingIcon(
+                    onTap: _controller.toggle,
+                    animationController: _controller.animationController,
+                    config: widget.appBar is SliderAppBar
+                        ? (widget.appBar as SliderAppBar).config
+                        : const SliderAppBarConfig(),
                   ),
                 ),
-              ),
-            ),
-            AnimatedBuilder(
-              animation: _controller.animationController,
-              builder: (context, child) {
-                final offset = _animationStrategy.getOffset(
-                  widget.slideDirection,
-                  _animation.value * MediaQuery.sizeOf(context).width / 100,
-                );
-
-                return Transform.translate(
-                  offset: offset,
-                  child: IgnorePointer(
-                    ignoring: !_controller.isDrawerOpen,
-                    child: Container(
-                      width: double.infinity,
-                      height: double.infinity,
-                      color: Colors.black.withValues(
-                        alpha: _alphaAnimation.value,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-            if (drawerEnabled) ...{
-              Positioned(
-                right: 16,
-                top: 16,
-                child: LeadingIcon(
-                  onTap: _controller.toggle,
-                  animationController: _controller.animationController,
-                  config: widget.appBar is SliderAppBar
-                      ? (widget.appBar as SliderAppBar).config
-                      : const SliderAppBarConfig(),
-                ),
-              ),
-            }
-          ],
+              }
+            ],
+          ),
         );
       },
     );
